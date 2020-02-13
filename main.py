@@ -1,13 +1,24 @@
 import os
 import sys
-
+import buttons_holding
 import pygame
 import requests
 import get_api
 
 
 pygame.init()
+buttons_holding.init()
 screen = pygame.display.set_mode((600, 450))
+
+
+def change_zoom(n):
+    global zoom
+    zoom += n
+    if zoom > 17:
+        zoom = 17
+    elif zoom < 0:
+        zoom = 0
+    load_image()
 
 
 def load_image():
@@ -23,24 +34,38 @@ def load_image():
     screen.blit(pygame.image.load(map_file), (0, 0))
 
 
+def move_map(cord, znac):
+    cords[cord] += 10 * (0.1 ** (zoom // 2 - 2)) * znac
+    if cord == 1:
+        if cords[1] > 85:
+            cords[1] = 85
+        elif cords[1] < -85:
+            cords[1] = -85
+    else:
+        cords[0] = (cords[0] + 180) % 360 - 180
+    load_image()
+
+
 cords = [37.622504, 55.753215]
 zoom = 15
 map_file = "map.png"
 load_image()
 running = True
+buttons_holding.add_button(pygame.K_UP, move_map, 1, 1)
+buttons_holding.add_button(pygame.K_DOWN, move_map, 1, -1)
+buttons_holding.add_button(pygame.K_RIGHT, move_map, 0, 1)
+buttons_holding.add_button(pygame.K_LEFT, move_map, 0, -1)
+buttons_holding.add_button(pygame.K_PAGEUP, change_zoom, 1)
+buttons_holding.add_button(pygame.K_PAGEDOWN, change_zoom, -1)
 while running:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False
+        if event.type == pygame.KEYDOWN:
+            buttons_holding.activate_button(event.key, True)
         if event.type == pygame.KEYUP:
-            if event.key == pygame.K_PAGEUP:
-                if zoom < 17:
-                    zoom += 1
-                load_image()
-            elif event.key == pygame.K_PAGEDOWN:
-                if zoom > 0:
-                    zoom -= 1
-                load_image()
+            buttons_holding.activate_button(event.key, False)
+    buttons_holding.buttons_actions()
     pygame.display.flip()
 pygame.quit()
 os.remove(map_file)
