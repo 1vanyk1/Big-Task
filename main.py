@@ -4,11 +4,13 @@ import buttons_holding
 import pygame
 import requests
 import get_api
+import gui
 
 
 pygame.init()
-buttons_holding.init()
 screen = pygame.display.set_mode((600, 450))
+buttons_holding.init()
+gui.init()
 
 
 def change_zoom(n):
@@ -21,8 +23,8 @@ def change_zoom(n):
     load_image()
 
 
-def load_image():
-    map_request = get_api.get_map(",".join(map(str, cords)), str(zoom), 'map')
+def load_image(map_type='map'):
+    map_request = get_api.get_map(",".join(map(str, cords)), str(zoom), map_type)
     response = requests.get(map_request)
     if not response:
         print("Ошибка выполнения запроса:")
@@ -57,6 +59,7 @@ buttons_holding.add_button(pygame.K_RIGHT, move_map, 0, 1)
 buttons_holding.add_button(pygame.K_LEFT, move_map, 0, -1)
 buttons_holding.add_button(pygame.K_PAGEUP, change_zoom, 1)
 buttons_holding.add_button(pygame.K_PAGEDOWN, change_zoom, -1)
+gui.add_button(0, 0, 0, 100, 100, 'Tset', 40, (0, 0, 0), (0, 0, 0), (0, 0, 0), (255, 0, 0), (255, 0, 0), (255, 0, 0))
 while running:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
@@ -66,6 +69,7 @@ while running:
         if event.type == pygame.KEYUP:
             buttons_holding.activate_button(event.key, False)
     buttons_holding.buttons_actions()
+    gui.draw_buttons(screen)
     pygame.display.flip()
 pygame.quit()
 os.remove(map_file)
