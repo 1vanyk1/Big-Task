@@ -6,7 +6,7 @@ buttons = {}
 
 class Button:
     def __init__(self, x, y, d_x, d_y, text, size, bc_nonact, bc_sel, bc_act,
-                 tc_nonact, tc_sel, tc_act, f, *args, **kwargs):
+                 tc_nonact, tc_sel, tc_act, key_trigger, f, *args, **kwargs):
         self.active = False
         self.x = x
         self.y = y
@@ -23,6 +23,7 @@ class Button:
         self.f = f
         self.args = args
         self.kwargs = kwargs
+        self.key_trigger = key_trigger
 
     def get_centre(self):
         return self.x + int(self.d_x / 2), self.y + int(self.d_y / 2)
@@ -60,10 +61,10 @@ def draw_text_at_centre(screen, color, text, x, y, size=50):
     screen.blit(text, (x - text.get_width() / 2, y - text.get_height() / 2))
 
 
-def add_button(id, x, y, d_x, d_y, text, size, bc_nonact, bc_sel, bc_act,
+def add_button(id, key_trigger, x, y, d_x, d_y, text, size, bc_nonact, bc_sel, bc_act,
                tc_nonact, tc_sel, tc_act, f, *args, **kwargs):
     buttons[id] = Button(x, y, d_x, d_y, text, size, bc_nonact, bc_sel, bc_act,
-                         tc_nonact, tc_sel, tc_act, f, *args, **kwargs)
+                         tc_nonact, tc_sel, tc_act, key_trigger, f, *args, **kwargs)
 
 
 def draw_buttons(screen, pos=None):
@@ -81,9 +82,17 @@ def draw_buttons(screen, pos=None):
 
 def button_clicked(pos):
     for key, item in buttons.items():
-        if item.check_selection(pos):
+        if item.key_trigger:
+            item.active = item.check_selection(pos)
+        elif item.check_selection(pos):
             item.f(*item.args, **item.kwargs)
 
 
 def select_button(id, b: bool):
     buttons[id].select(b)
+
+
+def button_key_actions(key_down):
+    for key, item in buttons.items():
+        if item.key_trigger and item.active:
+            item.f(key_down, *item.args, **item.kwargs)

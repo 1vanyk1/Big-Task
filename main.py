@@ -2,15 +2,44 @@ import os
 import sys
 import buttons_holding
 import pygame
-import requests
+import alphabets
 import get_api
 import gui
 
 
 pygame.init()
-screen = pygame.display.set_mode((600, 450))
+wight, height = 600, 450
+screen = pygame.display.set_mode((wight, height))
 buttons_holding.init()
 gui.init()
+
+language = 'eng'
+shift = False
+pt = None
+alphs = {'rus': alphabets.alphabet_rus, 'eng': alphabets.alphabet_eng}
+
+
+def nor(b1: bool, b2: bool):
+    return (b1 or b2) and not(b1 and b2)
+
+
+def toggle(b: bool):
+    return not b
+
+
+def change_text(key):
+    if key == pygame.K_BACKSPACE:
+        if gui.buttons['word_in'].text != '':
+            gui.buttons['word_in'].text = gui.buttons['word_in'].text[:-1]
+    if len(gui.buttons['word_in'].text) < 30:
+        try:
+            if shift:
+                text = gui.buttons['word_in'].text + alphs[language][key].upper()
+            else:
+                text = gui.buttons['word_in'].text + alphs[language][key]
+            gui.buttons['word_in'].text = text
+        except BaseException:
+            return None
 
 
 def change_map_type(type1):
@@ -24,6 +53,19 @@ def change_map_type(type1):
     load_image(map_type)
 
 
+def search():
+    if gui.buttons['word_in'].text != '':
+        response = get_api.search(gui.buttons['word_in'].text)
+        if response:
+            json_response = response.json()
+            toponym_coodrinates = json_response["response"]["GeoObjectCollection"]["featureMember"][
+                0]["GeoObject"]["Point"]["pos"]
+            global pt, cords
+            cords = list(map(float, toponym_coodrinates.split()))
+            pt = ','.join(toponym_coodrinates.split()) + ',' + 'org'
+            load_image(map_type)
+
+
 def change_zoom(n):
     global zoom
     zoom += n
@@ -35,11 +77,10 @@ def change_zoom(n):
 
 
 def load_image(map_type='map'):
-    map_request = get_api.get_map(",".join(map(str, cords)), str(zoom), map_type)
-    response = requests.get(map_request)
+    response = get_api.get_map(",".join(map(str, cords)), str(zoom), map_type, pt)
     if not response:
         print("Ошибка выполнения запроса:")
-        print(map_request)
+        print(response)
         print("Http статус:", response.status_code, "(", response.reason, ")")
         sys.exit(1)
     with open(map_file, "wb") as file:
@@ -72,22 +113,39 @@ buttons_holding.add_button(pygame.K_LEFT, move_map, 0, -1)
 buttons_holding.add_button(pygame.K_PAGEUP, change_zoom, 1)
 buttons_holding.add_button(pygame.K_PAGEDOWN, change_zoom, -1)
 
-gui.add_button('plan', 0, 0, 70, 30, 'Схема', 25, (127, 127, 127), (191, 191, 191), (255, 255, 255),
-               (0, 0, 0), (0, 0, 0), (0, 0, 0), change_map_type, 'map')
+gui.add_button('plan', False, 0, 0, 70, 30, 'Схема', 25, (127, 127, 127), (191, 191, 191),
+               (255, 255, 255), (0, 0, 0), (0, 0, 0), (0, 0, 0), change_map_type, 'map')
 gui.select_button('plan', True)
-gui.add_button('sputnik', 0, 30, 70, 30, 'Спутник', 25, (127, 127, 127), (191, 191, 191),
+gui.add_button('sputnik', False, 0, 30, 70, 30, 'Спутник', 25, (127, 127, 127), (191, 191, 191),
                (255, 255, 255), (0, 0, 0), (0, 0, 0), (0, 0, 0), change_map_type, 'sat')
-gui.add_button('hybrid', 0, 60, 70, 30, 'Гибрид', 25, (127, 127, 127), (191, 191, 191),
+gui.add_button('hybrid', False, 0, 60, 70, 30, 'Гибрид', 25, (127, 127, 127), (191, 191, 191),
                (255, 255, 255), (0, 0, 0), (0, 0, 0), (0, 0, 0), change_map_type, 'sat,skl')
+gui.add_button('word_in', True, 0, height - 30, wight - 80, 30, '1', 25, (127, 127, 127),
+               (191, 191, 191), (255, 255, 255), (0, 0, 0), (0, 0, 0), (0, 0, 0), change_text)
+gui.add_button('search', False, wight - 80, height - 30, 80, 30, 'Найти', 25, (127, 127, 127),
+               (191, 191, 191), (255, 255, 255), (0, 0, 0), (0, 0, 0), (0, 0, 0), search)
 mouse_pos = None
 while running:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False
         if event.type == pygame.KEYDOWN:
-            buttons_holding.activate_button(event.key, True)
+            if event.mod and (pygame.KMOD_ALT and event.key == pygame.K_LSHIFT or
+                              pygame.KMOD_SHIFT and event.key == pygame.K_LALT):
+                if language == 'eng':
+                    language = 'rus'
+                else:
+                    language = 'eng'
+            if event.key == pygame.K_LSHIFT:
+                shift = True
+            else:
+                buttons_holding.activate_button(event.key, True)
+                gui.button_key_actions(event.key)
         if event.type == pygame.KEYUP:
-            buttons_holding.activate_button(event.key, False)
+            if event.key == pygame.K_LSHIFT:
+                shift = False
+            else:
+                buttons_holding.activate_button(event.key, False)
         if event.type == pygame.MOUSEMOTION:
             mouse_pos = event.pos
         if event.type == pygame.MOUSEBUTTONUP:
