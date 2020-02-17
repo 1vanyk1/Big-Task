@@ -8,7 +8,7 @@ import gui
 
 
 pygame.init()
-wight, height = 600, 450
+wight, height = 600, 500
 screen = pygame.display.set_mode((wight, height))
 buttons_holding.init()
 gui.init()
@@ -42,6 +42,12 @@ def change_text(key):
             return None
 
 
+def reset_pt():
+    global pt
+    pt = None
+    load_image(map_type)
+
+
 def change_map_type(type1):
     global map_type
     gui.select_button('plan', False)
@@ -57,13 +63,16 @@ def search():
     if gui.buttons['word_in'].text != '':
         response = get_api.search(gui.buttons['word_in'].text)
         if response:
-            json_response = response.json()
-            toponym_coodrinates = json_response["response"]["GeoObjectCollection"]["featureMember"][
-                0]["GeoObject"]["Point"]["pos"]
-            global pt, cords
-            cords = list(map(float, toponym_coodrinates.split()))
-            pt = ','.join(toponym_coodrinates.split()) + ',' + 'org'
-            load_image(map_type)
+            try:
+                json_response = response.json()
+                toponym_coodrinates = json_response["response"]["GeoObjectCollection"][
+                    "featureMember"][0]["GeoObject"]["Point"]["pos"]
+                global pt, cords
+                cords = list(map(float, toponym_coodrinates.split()))
+                pt = ','.join(toponym_coodrinates.split()) + ',' + 'org'
+                load_image(map_type)
+            except BaseException:
+                return None
 
 
 def change_zoom(n):
@@ -120,10 +129,13 @@ gui.add_button('sputnik', False, 0, 30, 70, 30, 'Спутник', 25, (127, 127,
                (255, 255, 255), (0, 0, 0), (0, 0, 0), (0, 0, 0), change_map_type, 'sat')
 gui.add_button('hybrid', False, 0, 60, 70, 30, 'Гибрид', 25, (127, 127, 127), (191, 191, 191),
                (255, 255, 255), (0, 0, 0), (0, 0, 0), (0, 0, 0), change_map_type, 'sat,skl')
-gui.add_button('word_in', True, 0, height - 30, wight - 80, 30, '1', 25, (127, 127, 127),
+gui.add_button('word_in', True, 0, height - 30, wight, 30, '', 25, (159, 159, 159),
                (191, 191, 191), (255, 255, 255), (0, 0, 0), (0, 0, 0), (0, 0, 0), change_text)
-gui.add_button('search', False, wight - 80, height - 30, 80, 30, 'Найти', 25, (127, 127, 127),
+gui.add_button('search', False, wight - 80, height - 60, 80, 30, 'Найти', 25, (127, 127, 127),
                (191, 191, 191), (255, 255, 255), (0, 0, 0), (0, 0, 0), (0, 0, 0), search)
+gui.add_button('reset_pt', False, 0, height - 60, wight - 80, 30, 'Сброс поискового результата',
+               25, (127, 127, 127), (191, 191, 191), (255, 255, 255),
+               (0, 0, 0), (0, 0, 0), (0, 0, 0), reset_pt)
 mouse_pos = None
 while running:
     for event in pygame.event.get():
