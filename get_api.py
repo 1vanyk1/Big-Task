@@ -1,4 +1,5 @@
 import requests
+import math
 
 
 def get_map(toponym_coodrinates, corners, map_type='sat', pt=None):
@@ -20,3 +21,28 @@ def search(geocode):
         "geocode": geocode,
         "format": "json"}
     return requests.get(geocoder_api_server, params=geocoder_params)
+
+
+def distance(a, b):
+    degree_to_meters_factor = 111 * 1000
+    a_lon, a_lat = a
+    b_lon, b_lat = b
+    radians_lattitude = math.radians((a_lat + b_lat) / 2.)
+    lat_lon_factor = math.cos(radians_lattitude)
+    dx = abs(a_lon - b_lon) * degree_to_meters_factor * lat_lon_factor
+    dy = abs(a_lat - b_lat) * degree_to_meters_factor
+    return math.sqrt(dx * dx + dy * dy)
+
+
+def return_organization_address(address):
+    search_params = {"apikey": 'dda3ddba-c9ea-4ead-9010-f43fbc15c6e3',
+                     "text": address,
+                     "lang": "ru_RU",
+                     "ll": address,
+                     "type": "biz"}
+    response = requests.get("https://search-maps.yandex.ru/v1/", params=search_params)
+    if not response:
+        return None
+    json_response = response.json()
+    organization = json_response["features"][0]
+    return list(map(float, organization["geometry"]["coordinates"]))

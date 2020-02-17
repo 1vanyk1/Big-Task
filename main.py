@@ -198,11 +198,23 @@ while running:
         if event.type == pygame.MOUSEMOTION:
             mouse_pos = event.pos
         if event.type == pygame.MOUSEBUTTONUP:
-            if not gui.button_clicked(event.pos):
+            if event.button == 1:
+                if not gui.button_clicked(event.pos):
+                    delta = 340 / (2 ** zoom)
+                    delta1 = 830 / (2 ** zoom)
+                    search(str(cords[0] - delta1 / 2 + delta1 * (event.pos[0] / 600)) + ',' +
+                           str(cords[1] + delta / 2 - delta * (event.pos[1] / 450)), False)
+                    load_image(map_type)
+            elif event.button == 3:
                 delta = 340 / (2 ** zoom)
                 delta1 = 830 / (2 ** zoom)
-                search(str(cords[0] - delta1 / 2 + delta1 * (event.pos[0] / 600)) + ',' + str(cords[1] + delta / 2 - delta * (event.pos[1] / 450)), False)
-                load_image(map_type)
+                x = cords[0] - delta1 / 2 + delta1 * (event.pos[0] / 600)
+                y = cords[1] + delta / 2 - delta * (event.pos[1] / 450)
+                x_org, y_org = get_api.return_organization_address(str(x)[:10] + ',' + str(y)[:10])
+                print((x, y), (x_org, y_org), get_api.distance((x, y), (x_org, y_org)))
+                if get_api.distance((x, y), (x_org, y_org)) <= 50:
+                    search(str(x_org) + ',' + str(y_org))
+                    load_image(map_type)
     buttons_holding.buttons_actions()
     gui.draw_buttons(screen, mouse_pos)
     pygame.display.flip()
