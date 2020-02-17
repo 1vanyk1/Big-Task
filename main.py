@@ -71,33 +71,38 @@ def change_map_type(type1):
     load_image(map_type)
 
 
-def search():
-    if gui.buttons['word_in'].text != '':
-        response = get_api.search(gui.buttons['word_in'].text)
-        if response:
-            try:
-                json_response = response.json()
-                toponym = json_response["response"]["GeoObjectCollection"]["featureMember"][0][
-                    "GeoObject"]
-                toponym_coodrinates = toponym["Point"]["pos"]
-                toponym_address = toponym["metaDataProperty"]["GeocoderMetaData"]["text"]
-                gui.buttons['address'].text = toponym_address
-                global pt, cords
+def search(t=None, move=True):
+    response = False
+    if t is None:
+        if gui.buttons['word_in'].text != '':
+            response = get_api.search(gui.buttons['word_in'].text)
+    else:
+        response = get_api.search(t)
+    if response:
+        try:
+            json_response = response.json()
+            toponym = json_response["response"]["GeoObjectCollection"]["featureMember"][0][
+                "GeoObject"]
+            toponym_coodrinates = toponym["Point"]["pos"]
+            toponym_address = toponym["metaDataProperty"]["GeocoderMetaData"]["text"]
+            gui.buttons['address'].text = toponym_address
+            global pt, cords
+            if move:
                 cords = list(map(float, toponym_coodrinates.split()))
-                pt = ','.join(toponym_coodrinates.split()) + ',' + 'org'
-                load_image(map_type)
-            except BaseException:
-                return None
-            try:
-                global postal_code
-                toponym_postal_code = toponym["metaDataProperty"]["GeocoderMetaData"][
-                    "Address"]['postal_code']
-                postal_code = toponym_postal_code
-                if gui.buttons['bool_postal'].active:
-                    gui.buttons['postal_code'].text = postal_code
-            except BaseException:
-                postal_code = ''
-                return None
+            pt = ','.join(toponym_coodrinates.split()) + ',' + 'org'
+            load_image(map_type)
+        except BaseException:
+            return None
+        try:
+            global postal_code
+            toponym_postal_code = toponym["metaDataProperty"]["GeocoderMetaData"][
+                "Address"]['postal_code']
+            postal_code = toponym_postal_code
+            if gui.buttons['bool_postal'].active:
+                gui.buttons['postal_code'].text = postal_code
+        except BaseException:
+            postal_code = ''
+            return None
 
 
 def change_zoom(n):
@@ -112,6 +117,7 @@ def change_zoom(n):
 
 def load_image(map_type='map'):
     response = get_api.get_map(",".join(map(str, cords)), str(zoom), map_type, pt)
+
     if not response:
         print("Ошибка выполнения запроса:")
         print(response)
@@ -192,7 +198,11 @@ while running:
         if event.type == pygame.MOUSEMOTION:
             mouse_pos = event.pos
         if event.type == pygame.MOUSEBUTTONUP:
-            gui.button_clicked(event.pos)
+            if not gui.button_clicked(event.pos):
+                delta = 340 / (2 ** zoom)
+                delta1 = 830 / (2 ** zoom)
+                search(str(cords[0] - delta1 / 2 + delta1 * (event.pos[0] / 600)) + ',' + str(cords[1] + delta / 2 - delta * (event.pos[1] / 450)), False)
+                load_image(map_type)
     buttons_holding.buttons_actions()
     gui.draw_buttons(screen, mouse_pos)
     pygame.display.flip()

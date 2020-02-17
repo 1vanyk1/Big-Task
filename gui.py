@@ -81,11 +81,18 @@ def draw_buttons(screen, pos=None):
 
 
 def button_clicked(pos):
+    t = False
     for key, item in buttons.items():
         if item.key_trigger:
-            item.active = item.check_selection(pos)
+            if item.check_selection(pos):
+                item.active = True
+                t = True
+            else:
+                item.active = False
         elif item.check_selection(pos):
+            t = True
             item.f(*item.args, **item.kwargs)
+    return t
 
 
 def select_button(id, b: bool):

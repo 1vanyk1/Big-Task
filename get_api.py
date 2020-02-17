@@ -5,7 +5,8 @@ def get_map(toponym_coodrinates, corners, map_type='sat', pt=None):
     api_server = "http://static-maps.yandex.ru/1.x/"
     params = {"ll": toponym_coodrinates,
               "z": corners,
-              "l": map_type}
+              "l": map_type,
+              'size': '600,450'}
     if pt is not None:
         params['pt'] = pt
     request = requests.get(api_server, params=params)
