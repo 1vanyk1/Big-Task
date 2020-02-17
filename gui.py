@@ -92,6 +92,10 @@ def select_button(id, b: bool):
     buttons[id].select(b)
 
 
+def toggle_button(id):
+    buttons[id].select(not buttons[id].active)
+
+
 def button_key_actions(key_down):
     for key, item in buttons.items():
         if item.key_trigger and item.active:
