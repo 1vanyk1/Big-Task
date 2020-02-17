@@ -17,6 +17,7 @@ language = 'eng'
 shift = False
 pt = None
 alphs = {'rus': alphabets.alphabet_rus, 'eng': alphabets.alphabet_eng}
+postal_code = ''
 
 
 def nor(b1: bool, b2: bool):
@@ -25,6 +26,14 @@ def nor(b1: bool, b2: bool):
 
 def toggle(b: bool):
     return not b
+
+
+def toggle_postal():
+    gui.toggle_button('bool_postal')
+    if gui.buttons['bool_postal'].active:
+        gui.buttons['postal_code'].text = postal_code
+    else:
+        gui.buttons['postal_code'].text = ''
 
 
 def change_text(key):
@@ -43,8 +52,9 @@ def change_text(key):
 
 
 def reset_pt():
-    global pt
+    global pt, postal_code
     gui.buttons['address'].text = ''
+    postal_code = ''
     gui.buttons['postal_code'].text = ''
     pt = None
     load_image(map_type)
@@ -78,14 +88,16 @@ def search():
                 load_image(map_type)
             except BaseException:
                 return None
-            gui.buttons['postal_code'].text = ''
-            if gui.buttons['bool_postal'].active:
-                try:
-                    toponym_postal_code = toponym["metaDataProperty"]["GeocoderMetaData"][
-                        "Address"]['postal_code']
-                    gui.buttons['postal_code'].text = toponym_postal_code
-                except BaseException:
-                    return None
+            try:
+                global postal_code
+                toponym_postal_code = toponym["metaDataProperty"]["GeocoderMetaData"][
+                    "Address"]['postal_code']
+                postal_code = toponym_postal_code
+                if gui.buttons['bool_postal'].active:
+                    gui.buttons['postal_code'].text = postal_code
+            except BaseException:
+                postal_code = ''
+                return None
 
 
 def change_zoom(n):
@@ -152,8 +164,7 @@ gui.add_button('reset_pt', False, 0, height - 120, wight - 80, 30, 'Сброс �
 gui.add_button('address', False, 0, height - 60, wight, 30, '', 25, (127, 127, 127),
                (127, 127, 127), (127, 127, 127), (0, 0, 0), (0, 0, 0), (0, 0, 0), int)
 gui.add_button('bool_postal', False, 0, height - 30, 200, 30, 'Индекс', 25, (127, 0, 0),
-               (127, 0, 0), (0, 127, 0), (0, 0, 0), (0, 0, 0), (0, 0, 0),
-               gui.toggle_button, 'bool_postal')
+               (127, 0, 0), (0, 127, 0), (0, 0, 0), (0, 0, 0), (0, 0, 0), toggle_postal)
 gui.add_button('postal_code', False, 200, height - 30, wight - 200, 30, '', 25, (127, 127, 127),
                (127, 127, 127), (127, 127, 127), (0, 0, 0), (0, 0, 0), (0, 0, 0), int)
 mouse_pos = None
