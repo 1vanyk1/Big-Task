@@ -38,8 +38,8 @@ def return_organization_address(address):
     search_params = {"apikey": 'dda3ddba-c9ea-4ead-9010-f43fbc15c6e3',
                      "text": address,
                      "lang": "ru_RU",
-                     "ll": address,
-                     "type": "biz"}
+                     "type": "biz",
+                     'results': '1'}
     response = requests.get("https://search-maps.yandex.ru/v1/", params=search_params)
     if not response:
         return None

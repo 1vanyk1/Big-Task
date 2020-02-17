@@ -71,6 +71,13 @@ def change_map_type(type1):
     load_image(map_type)
 
 
+def get_address(t):
+    response = get_api.search(t)
+    json_response = response.json()
+    toponym = json_response["response"]["GeoObjectCollection"]["featureMember"][0]["GeoObject"]
+    return toponym["metaDataProperty"]["GeocoderMetaData"]["text"]
+
+
 def search(t=None, move=True):
     response = False
     if t is None:
@@ -108,8 +115,8 @@ def search(t=None, move=True):
 def change_zoom(n):
     global zoom
     zoom += n
-    if zoom > 17:
-        zoom = 17
+    if zoom > 18:
+        zoom = 18
     elif zoom < 0:
         zoom = 0
     load_image(map_type)
@@ -210,8 +217,8 @@ while running:
                 delta1 = 830 / (2 ** zoom)
                 x = cords[0] - delta1 / 2 + delta1 * (event.pos[0] / 600)
                 y = cords[1] + delta / 2 - delta * (event.pos[1] / 450)
-                x_org, y_org = get_api.return_organization_address(str(x)[:10] + ',' + str(y)[:10])
-                print((x, y), (x_org, y_org), get_api.distance((x, y), (x_org, y_org)))
+                x_org, y_org = get_api.return_organization_address(
+                    get_address(str(x) + ',' + str(y)))
                 if get_api.distance((x, y), (x_org, y_org)) <= 50:
                     search(str(x_org) + ',' + str(y_org))
                     load_image(map_type)
